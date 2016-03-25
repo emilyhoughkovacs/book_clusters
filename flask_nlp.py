@@ -27,8 +27,8 @@ from nltk.corpus import stopwords
 
 #---------- MODEL IN MEMORY ----------------#
 
-# Read the scientific data on breast cancer survival,
-# Build a LogisticRegression predictor on it
+# Import scraped book data
+# set up models so a search can find most similar
 
 spark_df = pd.read_csv("sparks.csv", index_col=0)
 
@@ -182,28 +182,26 @@ def viz_page():
 
 
 
-# Get an example and return it's score from the predictor model
 @app.route("/nlp", methods=["POST"])
 def nlp():
     """
-    When A POST request with json data is made to this uri,
-    Read the example from the json, predict probability and
-    send it with a response
+    When A POST request with json search data is made, it returns the
+    most similar books along with their similarty scores.
+
     """
-    # Get decision score for our example that came with the request
-    # Get decision score for our example that came with the request
+    #turn search from html into functions
     data = flask.request.json
-    #x = data["example"]
     title=str(data)
     index_n=spark_titles.index(title)
     document=spark_descriptions[index_n]
-    #x = str(data)
     df=recommender(title)
     titles=list(df['title'])
     total_scores=list(df['total'])
     lda_scores=list(df['lda'])
     lsi_scores=list(df['lsi'])
     tfidf_scores=list(df['tfidf'])
+
+    #scores for html page
     short=sum_spark(document)
     t0=titles[0]
     t1=titles[1]
@@ -236,12 +234,7 @@ def nlp():
     f4=int(tfidf_scores[4]*100)
     f5=int(tfidf_scores[5]*100)
 
-    #x = data["example"]
-    #par=line_break(document)
-    #summ=summurize(title)
-    #score = PREDICTOR.predict_proba(x)
-    #Put the result in a nice dict so we can send it as json
-    #return JSON.stringify(summ)
+
     results = {"summary": document,'short':short,
     't0':t0,'t1':t1,'t2':t2,'t3':t3,'t4':t4,'t5':t5,
     's0':s0,'s1':s1,'s2':s2,'s3':s3,'s4':s4,'s5':s5,
@@ -253,22 +246,19 @@ def nlp():
 @app.route("/searcher", methods=["POST"])
 def searcher():
     """
-    When A POST request with json data is made to this uri,
-    Read the example from the json, predict probability and
-    send it with a response
+
     """
-    # Get decision score for our example that came with the request
-    # Get decision score for our example that came with the request
+
     data = flask.request.json
-    #x = data["example"]
     title=str(data)
-    #x = str(data)
     df=bsearch(title)
     titles=list(df['title'])
     total_scores=list(df['total'])
     lda_scores=list(df['lda'])
     lsi_scores=list(df['lsi'])
     tfidf_scores=list(df['tfidf'])
+
+
     short=sum_spark(document)
     t0=titles[0]
     t1=titles[1]
@@ -301,12 +291,6 @@ def searcher():
     f4=int(tfidf_scores[4]*100)
     f5=int(tfidf_scores[5]*100)
 
-    #x = data["example"]
-    #par=line_break(document)
-    #summ=summurize(title)
-    #score = PREDICTOR.predict_proba(x)
-    #Put the result in a nice dict so we can send it as json
-    #return JSON.stringify(summ)
     results = {"summary": document,'short':short,
     't0':t0,'t1':t1,'t2':t2,'t3':t3,'t4':t4,'t5':t5,
     's0':s0,'s1':s1,'s2':s2,'s3':s3,'s4':s4,'s5':s5,
@@ -318,8 +302,7 @@ def searcher():
 @app.route("/sum_text", methods=["POST"])
 def sum_text():
     data = flask.request.json
-    #x = data["example"]
-    #document=str(data)
+
     short=sum_spark(data)
     results = {"summary": short}
     return flask.jsonify(results)
@@ -331,7 +314,6 @@ def good():
     title=str(data)
     index_n=good_titles.index(title)
     document=good_descriptions[index_n]
-    #document=str(data)
     results = {"summary": document}
     return flask.jsonify(results)
 
@@ -342,7 +324,6 @@ def cliff():
     title=str(data)
     index_n=cliff_titles.index(title)
     document=cliff_descriptions[index_n]
-    #document=str(data)
     results = {"summary": document}
     return flask.jsonify(results)
 
@@ -352,7 +333,6 @@ def spark():
     title=str(data)
     index_n=spark_titles.index(title)
     document=spark_descriptions[index_n]
-    #document=str(data)
     results = {"summary": document}
     return flask.jsonify(results)
 
